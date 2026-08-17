@@ -1,0 +1,194 @@
+// Copyright (c) 2021 The Litecoin Core developers
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+#include <mw/crypto/Schnorr.h>
+#include <mw/models/tx/Kernel.h>
+#include <mw/models/tx/Transaction.h>
+
+#include <mweb/mweb_policy.h>
+#include <primitives/transaction.h>
+
+#include <test_framework/TestMWEB.h>
+
+#include <limits>
+
+BOOST_FIXTURE_TEST_SUITE(TestKernel, MWEBTestingSetup)
+
+BOOST_AUTO_TEST_CASE(PlainKernel_Test)
+{
+    CAmount fee = 1000;
+    BlindingFactor excess_blind = BlindingFactor::Random();
+    Kernel kernel = Kernel::Create(excess_blind, boost::none, fee, boost::none, std::vector<PegOutCoin>{}, boost::none);
+
+    //
+    // Serialization
+    //
+    {
+        std::vector<uint8_t> serialized = kernel.Serialized();
+
+        Kernel kernel2;
+        CDataStream(serialized, SER_DISK, 0) >> kernel2;
+        BOOST_REQUIRE(kernel == kernel2);
+    }
+
+    //
+    // Signature Message
+    //
+    {
+        Hasher hasher;
+        hasher << uint8_t(1);
+        hasher << Commitment::Blinded(excess_blind, 0);
+        ::WriteVarInt<Hasher, VarIntMode::NONNEGATIVE_SIGNED, CAmount>(hasher, fee);
+        BOOST_REQUIRE(kernel.BuildSignedMsg().GetMsgHash() == hasher.hash());
+    }
+
+    //
+    // Getters
+    //
+    {
+        BOOST_REQUIRE(!kernel.HasPegIn());
+        BOOST_REQUIRE(!kernel.HasPegOut());
+        BOOST_REQUIRE(!kernel.HasStealthExcess());
+        BOOST_REQUIRE(kernel.GetPegIn() == 0);
+        BOOST_REQUIRE(kernel.GetPegOuts().empty());
+        BOOST_REQUIRE(kernel.GetLockHeight() == 0);
+        BOOST_REQUIRE(kernel.GetFee() == fee);
+        BOOST_REQUIRE(kernel.GetCommitment() == Commitment::Blinded(excess_blind, 0));
+        BOOST_REQUIRE(kernel.GetSignature() == Schnorr::Sign(excess_blind.data(), kernel.BuildSignedMsg().GetMsgHash()));
+    }
+}
+
+BOOST_AUTO_TEST_CASE(NonStandardKernel_Test)
+{
+    CAmount fee = 1000;
+    CAmount pegin = 10000;
+    std::vector<uint8_t> rand1 = RandomBytes<30>();
+    PegOutCoin pegout(2000, CScript(rand1.data(), rand1.data() + rand1.size()));
+    int32_t lock_height = 123456;
+    std::vector<uint8_t> rand2 = RandomBytes<30>();
+    Kernel standard_kernel(
+        Kernel::FEE_FEATURE_BIT | Kernel::PEGIN_FEATURE_BIT | Kernel::PEGOUT_FEATURE_BIT | Kernel::HEIGHT_LOCK_FEATURE_BIT | Kernel::STEALTH_EXCESS_FEATURE_BIT,
+        fee,
+        pegin,
+        std::vector<PegOutCoin>{PegOutCoin(2000, CScript(rand2.data(), rand2.data() + rand2.size()))},
+        lock_height,
+        PublicKey::Random(),
+        std::vector<uint8_t>{},
+        Commitment::Random(),
+        Signature(RandomBigInt<Signature::SIZE>())
+    );
+    std::vector<uint8_t> rand3 = RandomBytes<30>();
+    Kernel nonstandard_kernel1(
+        Kernel::ALL_FEATURE_BITS,
+        fee,
+        pegin,
+        std::vector<PegOutCoin>{PegOutCoin(2000, CScript(rand3.data(), rand3.data() + rand3.size()))},
+        lock_height,
+        PublicKey::Random(),
+        RandomBytes<20>(),
+        standard_kernel.GetCommitment(),
+        standard_kernel.GetSignature()
+    );
+
+    Kernel nonstandard_kernel2(
+        0x20,
+        boost::none,
+        boost::none,
+        std::vector<PegOutCoin>{},
+        boost::none,
+        PublicKey::Random(),
+        std::vector<uint8_t>{},
+        standard_kernel.GetCommitment(),
+        standard_kernel.GetSignature()
+    );
+
+    CDataStream serialized(SER_DISK, 0);
+    serialized << uint8_t(Kernel::PEGOUT_FEATURE_BIT);
+    serialized << std::vector<PegOutCoin>{};
+    serialized << standard_kernel.GetCommitment();
+    serialized << standard_kernel.GetSignature();
+    Kernel nonstandard_kernel3;
+    serialized >> nonstandard_kernel3;
+
+    BOOST_REQUIRE(standard_kernel.IsStandard());
+    BOOST_REQUIRE(!nonstandard_kernel1.IsStandard());
+    BOOST_REQUIRE(!nonstandard_kernel2.IsStandard());
+    BOOST_REQUIRE(!nonstandard_kernel3.IsStandard());
+    BOOST_REQUIRE(!nonstandard_kernel3.HasCanonicalPegOutFeature());
+
+    mw::Transaction::CPtr nonstandard_tx = mw::Transaction::Create(
+        BlindingFactor::Random(), BlindingFactor::Random(), {}, {}, { nonstandard_kernel3 });
+    CMutableTransaction transaction;
+    transaction.mweb_tx = MWEB::Tx{std::move(nonstandard_tx)};
+    std::string reason;
+    BOOST_REQUIRE(!MWEB::Policy::IsStandardTx(CTransaction{std::move(transaction)}, reason));
+    BOOST_REQUIRE_EQUAL(reason, "non-standard-mweb-tx");
+}
+
+BOOST_AUTO_TEST_CASE(EmptyPegOutFeature_Test)
+{
+    const BlindingFactor blind = BlindingFactor::Random();
+    const Commitment excess = Commitment::Blinded(blind, 0);
+    const uint8_t features = Kernel::PEGOUT_FEATURE_BIT;
+    const auto message = Kernel::GetSignatureMessage(
+        features,
+        excess,
+        boost::none,
+        boost::none,
+        boost::none,
+        {},
+        boost::none,
+        {}
+    );
+    const Kernel kernel(
+        features,
+        boost::none,
+        boost::none,
+        {},
+        boost::none,
+        boost::none,
+        {},
+        excess,
+        Schnorr::Sign(blind.data(), message)
+    );
+
+    BOOST_REQUIRE(!kernel.HasCanonicalPegOutFeature());
+    BOOST_REQUIRE_NO_THROW(TxBody({}, {}, {kernel}).Validate());
+}
+
+BOOST_AUTO_TEST_CASE(PegOutAmountOutOfRange_Test)
+{
+    std::vector<uint8_t> script_bytes = RandomBytes<30>();
+    CScript script(script_bytes.data(), script_bytes.data() + script_bytes.size());
+
+    Kernel kernel = Kernel::Create(
+        BlindingFactor::Random(),
+        boost::none,
+        boost::none,
+        boost::none,
+        std::vector<PegOutCoin>{ PegOutCoin(MAX_MONEY, script), PegOutCoin(1, script) },
+        boost::none
+    );
+
+    BOOST_REQUIRE(!kernel.GetPegOutAmount().has_value());
+}
+
+BOOST_AUTO_TEST_CASE(SupplyChangeOutOfRange_Test)
+{
+    std::vector<uint8_t> script_bytes = RandomBytes<30>();
+    CScript script(script_bytes.data(), script_bytes.data() + script_bytes.size());
+
+    Kernel kernel = Kernel::Create(
+        BlindingFactor::Random(),
+        boost::none,
+        std::numeric_limits<CAmount>::max(),
+        boost::none,
+        std::vector<PegOutCoin>{ PegOutCoin(1, script) },
+        boost::none
+    );
+
+    BOOST_REQUIRE(!kernel.GetSupplyChange().has_value());
+}
+
+BOOST_AUTO_TEST_SUITE_END()
