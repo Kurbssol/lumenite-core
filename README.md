@@ -1,85 +1,95 @@
-Litecoin Core integration/staging tree
-=====================================
+# Lumenite Core
 
-[![Build Status](https://travis-ci.org/litecoin-project/litecoin.svg?branch=master)](https://travis-ci.org/litecoin-project/litecoin)
+**Lumenite (LMT)** is a Proof-of-Work cryptocurrency built around the **HomeScrypt v1.1** mining algorithm.
 
-https://litecoin.org
+The project is currently in **public testnet development**.
 
-What is Litecoin?
-----------------
+HomeScrypt is designed for CPU and GPU mining, with the goal of making mining accessible to home users while maintaining a Bitcoin-style UTXO blockchain and fixed monetary policy.
 
-Litecoin is an experimental digital currency that enables instant payments to
-anyone, anywhere in the world. Litecoin uses peer-to-peer technology to operate
-with no central authority: managing transactions and issuing money are carried
-out collectively by the network. Litecoin Core is the name of open source
-software which enables the use of this currency.
+---
 
-For more information, as well as an immediately useable, binary version of
-the Litecoin Core software, see [https://litecoin.org](https://litecoin.org).
+## Project Status
 
-License
--------
+Current status:
 
-Litecoin Core is released under the terms of the MIT license. See [COPYING](COPYING) for more
-information or see https://opensource.org/licenses/MIT.
+**Lumenite Testnet v0.1**
 
-Development Process
--------------------
+Mainnet has **not launched**.
 
-The `master` branch is regularly built (see `doc/build-*.md` for instructions) and tested, but it is not guaranteed to be
-completely stable. [Tags](https://github.com/litecoin-project/litecoin/tags) are created
-regularly from release branches to indicate new official, stable release versions of Litecoin Core.
+The current testnet is being used to validate:
 
-The https://github.com/litecoin-project/gui repository is used exclusively for the
-development of the GUI. Its master branch is identical in all monotree
-repositories. Release branches and tags do not exist, so please do not fork
-that repository unless it is for development reasons.
+- HomeScrypt v1.1 consensus
+- CPU mining
+- NVIDIA CUDA mining
+- block propagation
+- multi-node synchronization
+- chain reorganizations
+- stale-work handling
+- wallet operation
+- transaction propagation
+- difficulty adjustment behavior
+- Windows and Linux compatibility
+- mining performance across different hardware
 
-The contribution workflow is described in [CONTRIBUTING.md](CONTRIBUTING.md)
-and useful hints for developers can be found in [doc/developer-notes.md](doc/developer-notes.md).
+Testnet coins have no monetary value.
 
-The developer [mailing list](https://groups.google.com/forum/#!forum/litecoin-dev)
-should be used to discuss complicated or controversial changes before working
-on a patch set.
+---
 
-Developer IRC can be found on Freenode at #litecoin-dev.
+## Coin Information
 
-Testing
--------
+| Parameter | Value |
+|---|---|
+| Name | Lumenite |
+| Ticker | LMT |
+| Consensus | Proof of Work |
+| Mining Algorithm | HomeScrypt v1.1 |
+| Initial Block Reward | 50 LMT |
+| Halving Interval | 840,000 blocks |
+| Supply Limit | Approximately 84,000,000 LMT |
+| Target Block Time | 150 seconds |
+| Coinbase Maturity | 100 blocks |
+| Premine | None |
+| Developer Reward | None |
+| MWEB | Disabled |
 
-Testing and code review is the bottleneck for development; we get more pull
-requests than we can review and test on short notice. Please be patient and help out by testing
-other people's pull requests, and remember this is a security-critical project where any mistake might cost people
-lots of money.
+The current Testnet v0.1 difficulty adjustment uses a 2,016-block / 3.5-day retarget window.
 
-### Automated Testing
+The final mainnet difficulty-adjustment algorithm is still being evaluated during testnet.
 
-Developers are strongly encouraged to write [unit tests](src/test/README.md) for new code, and to
-submit new unit tests for old code. Unit tests can be compiled and run
-(assuming they weren't disabled in configure) with: `make check`. Further details on running
-and extending unit tests can be found in [/src/test/README.md](/src/test/README.md).
+See:
 
-There are also [regression and integration tests](/test), written
-in Python, that are run automatically on the build server.
-These tests can be run (if the [test dependencies](/test) are installed) with: `test/functional/test_runner.py`
+`LUMENITE_CONSENSUS.md`
 
-The Travis CI system makes sure that every pull request is built for Windows, Linux, and macOS, and that unit/sanity tests are run automatically.
+for the full consensus specification.
 
-### Manual Quality Assurance (QA) Testing
+---
 
-Changes should be tested by somebody other than the developer who wrote the
-code. This is especially important for large or high-risk changes. It is useful
-to add a test plan to the pull request description if testing the changes is
-not straightforward.
+## HomeScrypt v1.1
 
-Translations
-------------
+HomeScrypt v1.1 is the Proof-of-Work algorithm used by Lumenite.
 
-We only accept translation fixes that are submitted through [Bitcoin Core's Transifex page](https://explore.transifex.com/bitcoin/bitcoin/).
-Translations are converted to Litecoin periodically.
+Development testing has successfully demonstrated:
 
-Translations are periodically pulled from Transifex and merged into the git repository. See the
-[translation process](doc/translation_process.md) for details on how this works.
+- CPU mining
+- NVIDIA CUDA mining
+- independent miners competing for blocks
+- valid block submission
+- stale-work detection
+- temporary chain forks
+- automatic chain reorganization
+- multi-node synchronization
 
-**Important**: We do not accept translation changes as GitHub pull requests because the next
-pull from Transifex would automatically overwrite them again.
+The Lumenite Core consensus implementation is authoritative for block validity.
+
+---
+
+## Lumenite Core Binaries
+
+The Lumenite Core source builds the following primary applications:
+
+```text
+lumenited
+lumenite-cli
+lumenite-wallet
+lumenite-tx
+lumenite-qt
