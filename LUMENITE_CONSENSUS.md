@@ -3,9 +3,9 @@
 **Project:** Lumenite  
 **Ticker:** LMT  
 **Proof-of-Work:** HomeScrypt v1.1  
-**Specification:** Testnet v0.1  
+**Specification:** Testnet v0.3  
 **Status:** Testnet consensus freeze  
-**Date:** August 17, 2026
+**Date:** August 22, 2026
 
 ---
 
@@ -18,14 +18,14 @@ The network is intended to support independent CPU and GPU mining while
 retaining a Bitcoin-style UTXO monetary system and fixed issuance schedule.
 
 This document records the consensus and monetary parameters used for the
-Lumenite Testnet v0.1 release.
+Lumenite Testnet v0.3 release.
 
-Parameters documented as frozen should not be changed during the v0.1
-public testnet without intentionally starting a new incompatible testnet.
+Parameters documented as frozen should not be changed during the v0.3
+public testnet without intentionally introducing a new consensus version.
 
-The difficulty-adjustment algorithm remains under evaluation during
-testnet and is not yet considered frozen for the eventual Lumenite
-mainnet launch.
+LWMA-45 is the active difficulty-adjustment algorithm for Lumenite
+Testnet v0.3. Its behavior continues to be evaluated before the final
+Lumenite mainnet consensus rules are selected.
 
 ---
 
@@ -189,23 +189,73 @@ approximately four years at target spacing.
 
 ## 7. Difficulty Adjustment
 
-### Testnet v0.1
+### Testnet v0.3
 
-The initial Lumenite difficulty-adjustment configuration uses:
+Lumenite Testnet v0.3 uses a per-block Linearly Weighted Moving Average
+difficulty-adjustment algorithm (LWMA).
 
-    Target spacing: 150 seconds
-    Target timespan: 302,400 seconds
-    Adjustment interval: 2,016 blocks
+Consensus parameters:
 
-302,400 seconds equals:
+    Algorithm:                 LWMA
+    Window:                    45 blocks
+    Target block spacing:      150 seconds
+    Adjustment frequency:      Every block
+    LWMA activation height:    46
+    Minimum-difficulty blocks: Disabled
+    Difficulty retargeting:    Enabled
 
-    3.5 days
+The LWMA algorithm evaluates the most recent 45 solve-time samples and
+weights newer solve times more heavily than older solve times.
 
-The adjustment interval is calculated as:
+A complete LWMA window requires 45 solve-time samples, corresponding to
+46 block timestamps.
 
-    302,400 / 150 = 2,016 blocks
+Individual solve times are bounded to:
+
+    Minimum solve time:        1 second
+    Maximum solve time:        900 seconds
+
+The maximum solve time is six times the target block spacing:
+
+    6 * 150 = 900 seconds
+
+This prevents a single extremely delayed block from having unlimited
+influence over the next difficulty calculation.
+
+The algorithm also limits difficulty movement from one block to the next.
+
+In target space, the permitted range is approximately:
+
+    Hardest next target:       previous target * 4 / 5
+    Easiest next target:       previous target * 4 / 3
+
+Because target and difficulty are inversely related, this corresponds to
+approximately a maximum 25 percent difficulty increase or decrease per
+block.
+
+The calculated target may never exceed the network Proof-of-Work limit.
+
+### LWMA activation
+
+LWMA activates for the block whose height is:
+
+    46
+
+The next block height is evaluated before selecting the difficulty
+algorithm.
+
+Therefore:
+
+    Blocks before height 46:   pre-LWMA difficulty behavior
+    Block 46 and later:        LWMA-45
+
+The activation height is consensus-critical. Nodes participating on the
+same Testnet v0.3 chain must use identical activation rules.
 
 ### Mainnet
+
+Mainnet currently retains the legacy windowed difficulty-adjustment
+algorithm.
 
 Minimum-difficulty blocks:
 
@@ -215,19 +265,25 @@ Difficulty retargeting:
 
     Enabled
 
+The Testnet v0.3 LWMA deployment does not by itself activate LWMA on
+Lumenite mainnet.
+
 ### Testnet
 
 Minimum-difficulty blocks:
 
-    Enabled
+    Disabled
 
 Difficulty retargeting:
 
     Enabled
 
-Allowing minimum-difficulty blocks is intended to make development and
-public testnet operation practical when network hashrate is low or
-intermittent.
+Difficulty algorithm:
+
+    LWMA-45
+
+Unlike the earlier testnet configuration, the Litecoin-style
+minimum-difficulty shortcut is disabled while LWMA is active.
 
 ### Regtest
 
@@ -242,29 +298,53 @@ not part of Lumenite's production monetary policy.
 
 ## 8. Difficulty Algorithm Status
 
-The 2,016-block / 3.5-day difficulty-adjustment system is accepted for
-Lumenite Testnet v0.1.
+LWMA-45 is the active difficulty-adjustment algorithm for Lumenite
+Testnet v0.3.
 
-It is NOT yet frozen as the final Lumenite mainnet difficulty-adjustment
-algorithm.
+The algorithm recalculates difficulty every block rather than waiting for
+a fixed multi-day retarget interval.
 
-Public testnet operation will be used to evaluate its behavior under
-HomeScrypt-specific conditions, including:
+Development testing prior to the Testnet v0.3 specification evaluated
+multiple candidate LWMA history windows, including:
+
+- LWMA-30;
+- LWMA-45; and
+- LWMA-60.
+
+LWMA-45 was selected for Testnet v0.3 as a balance between responsiveness
+to changing network hashrate and resistance to excessive short-term
+difficulty variance.
+
+Testing included scenarios involving:
 
 - rapid GPU hashrate increases;
 - rapid GPU hashrate decreases;
-- CPU-only periods;
+- CPU-only mining;
+- transitions between GPU and CPU mining;
 - miners joining and leaving;
-- low total network hashrate;
-- large differences in miner performance;
-- periods of intermittent mining; and
-- recovery following hashrate shocks.
+- large temporary hashrate increases;
+- major hashrate loss;
+- short hashrate bursts;
+- hash-hopping simulations;
+- low total network hashrate; and
+- random block-time variance.
 
-Before mainnet launch, Lumenite may retain the existing adjustment
-algorithm or replace it with a more responsive difficulty-adjustment
-system.
+CPU and NVIDIA CUDA mining have both successfully produced valid blocks
+while the LWMA difficulty changed dynamically.
 
-Any such change must occur before the final mainnet consensus freeze.
+The Testnet v0.3 LWMA configuration is:
+
+    Window:                    45 blocks
+    Target spacing:            150 seconds
+    Adjustment frequency:      Every block
+    Activation height:         46
+    Minimum-difficulty rule:   Disabled
+
+LWMA-45 is frozen for the Testnet v0.3 consensus rules so that all
+Testnet v0.3 nodes remain consensus-compatible.
+
+The final mainnet difficulty-adjustment configuration remains subject to
+testing, review, and an explicit mainnet consensus freeze.
 
 ---
 
@@ -273,7 +353,7 @@ Any such change must occur before the final mainnet consensus freeze.
 Lumenite is a new blockchain and therefore does not reproduce historical
 Litecoin activation timelines.
 
-The Testnet v0.1 mainnet/testnet consensus configuration uses:
+The Testnet v0.3 mainnet/testnet consensus configuration uses:
 
 | Consensus Feature | Activation |
 |---|---:|
@@ -298,7 +378,7 @@ MimbleWimble Extension Blocks (MWEB) are:
 
     Disabled
 
-MWEB is not part of the Lumenite Testnet v0.1 consensus specification.
+MWEB is not part of the Lumenite Testnet v0.3 consensus specification.
 
 No assumption should be made that MWEB will be activated in a future
 Lumenite release.
@@ -331,7 +411,7 @@ Merkle root:
 
 ### Testnet Genesis
 
-The authoritative Testnet v0.1 genesis hash is the value compiled into
+The authoritative Testnet v0.3 genesis hash is the value compiled into
 the finalized Lumenite Core `chainparams.cpp`.
 
 Testnet nodes MUST agree on this genesis block before participating in
@@ -352,7 +432,7 @@ including timestamp, nonce, bits, version, reward, and hash.
 
 ---
 
-## 12. Testnet v0.1 Addressing
+## 12. Testnet v0.3 Addressing
 
 Lumenite Testnet uses its own address configuration.
 
@@ -373,7 +453,7 @@ corresponding Lumenite Core chain parameters.
 
 ## 13. Consensus Verification
 
-Before the Testnet v0.1 freeze, the Lumenite validation test suite
+The Lumenite validation test suite
 explicitly verified the monetary-policy boundaries.
 
 Expected subsidy behavior includes:
@@ -424,9 +504,9 @@ policy.
 
 ---
 
-## 15. Testnet v0.1 Goals
+## 15. Testnet v0.3 Goals
 
-The public Lumenite Testnet v0.1 is intended to validate:
+The public Lumenite Testnet v0.3 is intended to validate:
 
 1. HomeScrypt v1.1 consensus compatibility across hardware.
 2. CPU mining.
@@ -451,7 +531,7 @@ development and testing.
 
 ## 16. Consensus Freeze Policy
 
-The following parameters are frozen for Lumenite Testnet v0.1:
+The following parameters are frozen for Lumenite Testnet v0.3:
 
     Proof of Work:           HomeScrypt v1.1
     Initial subsidy:         50 LMT
@@ -459,26 +539,30 @@ The following parameters are frozen for Lumenite Testnet v0.1:
     MAX_MONEY:               84,000,000 LMT
     Coinbase maturity:       100 blocks
     Target block spacing:    150 seconds
+    Testnet DAA:             LWMA-45
+    LWMA activation height:  46
+    LWMA adjustment:         every block
+    Testnet min difficulty:  disabled
     MWEB:                    disabled
 
 Consensus feature activation parameters documented in this specification
-are also part of the Testnet v0.1 configuration.
+are also part of the Testnet v0.3 configuration.
 
-The current difficulty-adjustment algorithm is frozen for the lifetime
-of Testnet v0.1 so all v0.1 nodes remain consensus-compatible.
+LWMA-45 is frozen for the lifetime of Testnet v0.3 so all v0.3 nodes
+remain consensus-compatible.
 
-However, the difficulty-adjustment algorithm remains explicitly
-provisional with respect to the eventual Lumenite mainnet release.
+This freeze applies to Testnet v0.3 only. The final mainnet
+difficulty-adjustment configuration remains subject to review.
 
 Changing a consensus-critical parameter during public testing should
 result in a new testnet version rather than silently changing the
-existing Testnet v0.1 rules.
+existing Testnet v0.3 rules.
 
 ---
 
 ## 17. Source Code Authority
 
-This document describes the intended Lumenite Testnet v0.1 consensus
+This document describes the intended Lumenite Testnet v0.3 consensus
 rules.
 
 In the event of a discrepancy between this document and the executable
@@ -492,7 +576,7 @@ mainnet release.
 
 ## 18. Mainnet Readiness
 
-Lumenite Testnet v0.1 does not constitute a mainnet launch.
+Lumenite Testnet v0.3 does not constitute a mainnet launch.
 
 Before mainnet, the project should complete:
 
@@ -502,18 +586,20 @@ Before mainnet, the project should complete:
 - multi-node synchronization testing;
 - network partition/reorganization testing;
 - transaction and wallet testing;
-- difficulty-adjustment analysis;
+- continued LWMA-45 difficulty-adjustment analysis;
+- ASIC-resistance and specialized-hardware testing;
 - code review;
 - final network parameter review;
 - final mainnet genesis verification; and
 - final consensus freeze.
 
-The mainnet difficulty-adjustment algorithm must be explicitly selected
-and documented before the final Lumenite mainnet consensus freeze.
+The mainnet difficulty-adjustment algorithm and its final parameters must
+be explicitly selected and documented before the final Lumenite mainnet
+consensus freeze.
 
 ---
 
-## Lumenite Testnet v0.1
+## Lumenite Testnet v0.3
 
 **Coin:** Lumenite  
 **Ticker:** LMT  
