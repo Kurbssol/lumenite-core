@@ -1,128 +1,103 @@
-# Lumenite Core
+Lumenite Core
+Lumenite (LMT) is a Proof-of-Work cryptocurrency built around the HomeScrypt v1.1 mining algorithm.
 
-**Lumenite (LMT)** is a Proof-of-Work cryptocurrency built around the **HomeScrypt v1.1** mining algorithm.
-
-The project is currently in **public testnet development**.
+The project is currently in public testnet development.
 
 HomeScrypt is designed for CPU and GPU mining, with the goal of making mining accessible to home users while maintaining a Bitcoin-style UTXO blockchain and fixed monetary policy.
 
----
+Project Status
+Current release: Lumenite Core v0.3.0
 
-## Project Status
+Network status: Public Testnet
 
-**Current release: Lumenite Core v0.3.0**
-
-**Network status: Public Testnet**
-
-Mainnet has **not launched**.
+Mainnet has not launched.
 
 Lumenite Testnet v0.3 is being used to validate:
 
-- HomeScrypt v1.1 consensus
-- LWMA-45 per-block difficulty adjustment
-- CPU mining
-- NVIDIA CUDA mining
-- ASIC-resistance behavior
-- block propagation
-- multi-node synchronization
-- chain reorganizations
-- stale-work handling
-- wallet operation
-- transaction propagation
-- Windows and Linux compatibility
-- mining performance across different hardware
-
+HomeScrypt v1.1 consensus
+LWMA-45 per-block difficulty adjustment
+CPU mining
+NVIDIA CUDA mining
+ASIC-resistance behavior
+block propagation
+multi-node synchronization
+chain reorganizations
+stale-work handling
+wallet operation
+transaction propagation
+Windows and Linux compatibility
+mining performance across different hardware
 Testnet coins have no monetary value.
 
 Consensus and network parameters may change before mainnet.
 
----
+Coin Information
+Parameter	Value
+Name	Lumenite
+Ticker	LMT
+Consensus	Proof of Work
+Mining Algorithm	HomeScrypt v1.1
+Initial Block Reward	50 LMT
+Halving Interval	840,000 blocks
+Supply Limit	Approximately 84,000,000 LMT
+Target Block Time	150 seconds
+Difficulty Adjustment	LWMA-45 on Testnet v0.3
+Difficulty Adjustment Frequency	Every block
+Coinbase Maturity	100 blocks
+Premine	None
+Developer Reward	None
+MWEB	Disabled
+See LUMENITE_CONSENSUS.md for the full consensus specification.
 
-## Coin Information
-
-| Parameter | Value |
-|---|---|
-| Name | Lumenite |
-| Ticker | LMT |
-| Consensus | Proof of Work |
-| Mining Algorithm | HomeScrypt v1.1 |
-| Initial Block Reward | 50 LMT |
-| Halving Interval | 840,000 blocks |
-| Supply Limit | Approximately 84,000,000 LMT |
-| Target Block Time | 150 seconds |
-| Difficulty Adjustment | LWMA-45 on Testnet v0.3 |
-| Difficulty Adjustment Frequency | Every block |
-| Coinbase Maturity | 100 blocks |
-| Premine | None |
-| Developer Reward | None |
-| MWEB | Disabled |
-
-See `LUMENITE_CONSENSUS.md` for the full consensus specification.
-
----
-
-## Difficulty Adjustment
-
-Lumenite Testnet v0.3 introduces a **per-block LWMA-45 difficulty adjustment algorithm**.
+Difficulty Adjustment
+Lumenite Testnet v0.3 introduces a per-block LWMA-45 difficulty adjustment algorithm.
 
 Instead of waiting for a large fixed retarget period to complete, difficulty is recalculated for every block using recent block history.
 
 Current Testnet v0.3 parameters:
 
-- **Target block spacing:** 150 seconds
-- **LWMA window:** 45 blocks
-- **Adjustment frequency:** Every block
-- **Testnet activation height:** 46
-- **Minimum-difficulty shortcut:** Disabled
-- **Per-block movement limiting:** Enabled
-
+Target block spacing: 150 seconds
+LWMA window: 45 blocks
+Adjustment frequency: Every block
+Testnet activation height: 46
+Minimum-difficulty shortcut: Disabled
+Per-block movement limiting: Enabled
 The moving window gives greater weight to newer solve times, allowing difficulty to respond to changes in network hashrate considerably faster than the previous long-window retarget system.
 
 LWMA-45 was selected for Testnet v0.3 after simulation and live mining tests involving changing hashrate conditions.
 
 The final mainnet difficulty-adjustment parameters remain subject to testnet validation.
 
----
-
-## HomeScrypt v1.1
-
+HomeScrypt v1.1
 HomeScrypt v1.1 is the Proof-of-Work algorithm used by Lumenite.
 
 It is designed for general-purpose CPU and GPU mining and is intended to make mining practical for home users.
 
 Development and testnet testing have successfully demonstrated:
 
-- CPU mining
-- NVIDIA CUDA mining
-- independent CPU and GPU miners competing for blocks
-- valid block construction and submission
-- stale-work detection
-- temporary chain forks
-- automatic chain reorganization
-- multi-node synchronization
-- operation with the LWMA-45 difficulty adjustment algorithm
-
+CPU mining
+NVIDIA CUDA mining
+independent CPU and GPU miners competing for blocks
+valid block construction and submission
+stale-work detection
+temporary chain forks
+automatic chain reorganization
+multi-node synchronization
+operation with the LWMA-45 difficulty adjustment algorithm
 The Lumenite Core consensus implementation is authoritative for block validity.
 
----
-
-## ASIC Resistance Testing
-
+ASIC Resistance Testing
 HomeScrypt v1.1 is intended to favor general-purpose CPU and GPU hardware rather than conventional Scrypt ASIC hardware.
 
 CPU and NVIDIA CUDA mining have been validated on the current testnet.
 
 Direct testing against conventional Scrypt ASIC hardware is part of the Testnet v0.3 validation process.
 
-ASIC resistance should therefore be considered **under active testing** until this validation is complete.
+ASIC resistance should therefore be considered under active testing until this validation is complete.
 
----
-
-## Lumenite Core Binaries
-
+Lumenite Core Binaries
 The Lumenite Core source builds the following primary applications:
 
-```text
 lumenited
 lumenite-cli
 lumenite-wallet
