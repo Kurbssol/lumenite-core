@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <fs.h>
+#include <limits>
 
 #ifndef WIN32
 #include <cstring>

@@ -89,6 +89,11 @@ struct Params {
     bool fPowNoRetargeting;
     int64_t nPowTargetSpacing;
     int64_t nPowTargetTimespan;
+    /** Lumenite per-block LWMA difficulty adjustment */
+    bool fPowUseLWMA{false};
+    int nPowLWMAWindow{45};
+    int64_t nPowLWMAActivationHeight{0};
+
     int64_t DifficultyAdjustmentInterval() const { return nPowTargetTimespan / nPowTargetSpacing; }
     /** The best chain should have at least this much work */
     uint256 nMinimumChainWork;

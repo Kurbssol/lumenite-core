@@ -1860,8 +1860,6 @@ bool AppInitMain(const util::Ref& context, NodeContext& node, interfaces::BlockA
         // The option to not set NODE_WITNESS is only used in the tests and should be removed.
         nLocalServices = ServiceFlags(nLocalServices | NODE_WITNESS);
 
-        // NODE_MWEB requires NODE_WITNESS, so we shouldn't signal for NODE_MWEB without NODE_WITNESS
-        nLocalServices = ServiceFlags(nLocalServices | NODE_MWEB | NODE_MWEB_LIGHT_CLIENT);
     }
 
     // ********************************************************* Step 11: import blocks

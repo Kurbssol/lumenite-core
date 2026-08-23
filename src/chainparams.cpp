@@ -80,6 +80,11 @@ public:
         consensus.nPowTargetSpacing = 2.5 * 60;
         consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = false;
+
+        // Lumenite mainnet uses the legacy difficulty adjustment algorithm.
+        consensus.fPowUseLWMA = false;
+        consensus.nPowLWMAWindow = 45;
+        consensus.nPowLWMAActivationHeight = 0;
         consensus.nRuleChangeActivationThreshold = 6048; // 75% of 8064
         consensus.nMinerConfirmationWindow = 8064; // nPowTargetTimespan / nPowTargetSpacing * 4
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
@@ -177,9 +182,16 @@ public:
                 consensus.SegwitHeight = 1;
                 consensus.MinBIP9WarningHeight = 1;
         consensus.powLimit = uint256S("000fffff00000000000000000000000000000000000000000000000000000000");
-        consensus.nPowTargetTimespan = 3.5 * 24 * 60 * 60; // 3.5 days
+        consensus.nPowTargetTimespan = 3.5 * 24 * 60 * 60; // Legacy interval retained for non-LWMA paths
         consensus.nPowTargetSpacing = 2.5 * 60;
-        consensus.fPowAllowMinDifficultyBlocks = true;
+
+        // Lumenite testnet uses per-block LWMA-45 difficulty adjustment.
+        consensus.fPowUseLWMA = true;
+        consensus.nPowLWMAWindow = 45;
+        consensus.nPowLWMAActivationHeight = 46;
+
+        // Minimum-difficulty shortcut is disabled when using LWMA.
+        consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = false;
         consensus.nRuleChangeActivationThreshold = 1512; // 75% for testchains
         consensus.nMinerConfirmationWindow = 2016; // nPowTargetTimespan / nPowTargetSpacing
@@ -275,6 +287,11 @@ public:
         consensus.nPowTargetSpacing = 2.5 * 60;
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.fPowNoRetargeting = true;
+
+        // Regtest keeps its existing no-retarget behavior.
+        consensus.fPowUseLWMA = false;
+        consensus.nPowLWMAWindow = 45;
+        consensus.nPowLWMAActivationHeight = 0;
         consensus.nRuleChangeActivationThreshold = 108; // 75% for testchains
         consensus.nMinerConfirmationWindow = 144; // Faster than normal for regtest (144 instead of 2016)
 
