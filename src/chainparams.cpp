@@ -81,10 +81,10 @@ public:
         consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = false;
 
-        // Lumenite mainnet uses the legacy difficulty adjustment algorithm.
-        consensus.fPowUseLWMA = false;
+        // Lumenite mainnet uses per-block LWMA-45 difficulty adjustment from launch.
+        consensus.fPowUseLWMA = true;
         consensus.nPowLWMAWindow = 45;
-        consensus.nPowLWMAActivationHeight = 0;
+        consensus.nPowLWMAActivationHeight = 1;
         consensus.nRuleChangeActivationThreshold = 6048; // 75% of 8064
         consensus.nMinerConfirmationWindow = 8064; // nPowTargetTimespan / nPowTargetSpacing * 4
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
@@ -112,10 +112,10 @@ public:
          * The characters are rarely used upper ASCII, not valid as UTF-8, and produce
          * a large 32-bit integer with any alignment.
          */
-        pchMessageStart[0] = 0xd2;
-        pchMessageStart[1] = 0x9b;
-        pchMessageStart[2] = 0x4c;
-        pchMessageStart[3] = 0xf7;
+        pchMessageStart[0] = 0x0b;
+        pchMessageStart[1] = 0x1a;
+        pchMessageStart[2] = 0x9a;
+        pchMessageStart[3] = 0xce;
         nDefaultPort = 19335;
         nPruneAfterHeight = 100000;
         m_assumed_blockchain_size = 40;
@@ -142,7 +142,9 @@ public:
         bech32_hrp = "lmt";
         mweb_hrp = "lmtmweb";
 
-        vFixedSeeds.clear(); // Lumenite: no fixed mainnet seeds yet
+        vFixedSeeds.clear(); // Lumenite: no compiled fixed seeds yet
+        vSeeds.clear();
+        vSeeds.emplace_back("154.12.116.165"); // Lumenite mainnet bootstrap node
 
         fDefaultConsistencyChecks = false;
         fRequireStandard = true;
