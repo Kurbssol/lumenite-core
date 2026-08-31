@@ -103,6 +103,8 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_MWEB].nStartHeight = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_MWEB].nTimeoutHeight = 0;
 
+        consensus.mweb_pegout_feature_activation_height = std::numeric_limits<int>::max();
+
                 consensus.nMinimumChainWork = uint256{};
                 consensus.defaultAssumeValid = uint256{};
 
