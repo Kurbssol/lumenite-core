@@ -41,7 +41,7 @@
 
 /**
  * Return average network hashes per second based on the last 'lookup' blocks,
- * or from the last difficulty change if 'lookup' is nonpositive.
+ * Nonpositive 'lookup' values use a 120-block rolling window.
  * If 'height' is nonnegative, compute the estimate at the time when a given block was found.
  */
 static UniValue GetNetworkHashPS(int lookup, int height) {
@@ -53,9 +53,11 @@ static UniValue GetNetworkHashPS(int lookup, int height) {
     if (pb == nullptr || !pb->nHeight)
         return 0;
 
-    // If lookup is -1, then use blocks since last difficulty change.
+    // Lumenite uses per-block LWMA difficulty adjustment, so there is no
+    // traditional fixed difficulty period. Use a 120-block rolling window
+    // when a nonpositive lookup value is supplied.
     if (lookup <= 0)
-        lookup = pb->nHeight % Params().GetConsensus().DifficultyAdjustmentInterval() + 1;
+        lookup = 120;
 
     // If lookup is larger than chain, then set it to chain length.
     if (lookup > pb->nHeight)
@@ -85,10 +87,10 @@ static RPCHelpMan getnetworkhashps()
 {
     return RPCHelpMan{"getnetworkhashps",
                 "\nReturns the estimated network hashes per second based on the last n blocks.\n"
-                "Pass in [blocks] to override # of blocks, -1 specifies since last difficulty change.\n"
+                "Pass in [blocks] to override # of blocks. Nonpositive values use a 120-block rolling window.\n"
                 "Pass in [height] to estimate the network speed at the time when a certain block was found.\n",
                 {
-                    {"nblocks", RPCArg::Type::NUM, /* default */ "120", "The number of blocks, or -1 for blocks since last difficulty change."},
+                    {"nblocks", RPCArg::Type::NUM, /* default */ "120", "The number of blocks. Nonpositive values use a 120-block rolling window."},
                     {"height", RPCArg::Type::NUM, /* default */ "-1", "To estimate at the time of the given height."},
                 },
                 RPCResult{
