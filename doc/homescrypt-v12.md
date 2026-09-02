@@ -77,21 +77,41 @@ contract `a*b+c` on its own.
 
 ## Measured
 
-Scalar, single thread, MSVC `/O2 /fp:strict`, `scrypt_1024_1_1_256` stubbed
-(fixed cost in both versions):
+Reference implementation, scalar, single thread, MSVC `/O2 /fp:strict`.
 
-| Setting | s/hash | FMA/hash | vs v1.1 |
+| Passes | Full hash | FMA/s demanded | 1 year of chain |
 |---|---|---|---|
-| v1.1 | 0.0551 | — | 1.0x |
-| `FP0` (memory floor) | 0.0131 | 0 | 0.24x |
-| `FP32` | 0.0717 | 6.7e7 | 1.3x |
-| `FP64` | 0.1295 | 1.3e8 | 2.4x |
-| **`FP128` (pinned)** | **0.2380** | **2.7e8** | **4.3x** |
-| `FP256` | 0.4540 | 5.4e8 | 8.2x |
-| `FP512` | 0.8904 | 1.07e9 | 16.2x |
+| 0 (no FP) | 13 ms | 0 | 46 min |
+| 3 | 15 ms | 0.80 G | 52 min |
+| **6 (pinned)** | **20 ms** | **0.90 G** | **1.2 hours** |
+| 12 | 33 ms | 0.98 G | 1.9 hours |
+| 24 | 57 ms | 1.00 G | 3.3 hours |
+| 128 (was) | 238 ms | 1.18 G | 14 hours |
 
-Linear above `FP32`, confirming the phase is FP-bound. A large FPGA becomes
-FP-bound near 53 passes, so 128 clears it with margin at 4.3x rather than 16x.
+The third column is what matters for the defence; the fourth is what matters
+for everyone else.
+
+**The FP32 demand saturates early.** Between 6 and 128 passes the rate an
+attacker must sustain rises 31%, while verification cost rises eighteenfold.
+An FPGA is stopped by needing enough correctly-rounded FMA units to keep pace
+with a GPU. Whether it must do that for 20 ms or 238 ms per hash does not
+change how many units it needs.
+
+Verification cost is not paid by miners. It is paid by every node that ever
+syncs, for every block ever made. At a 150-second block target a year is about
+210,000 blocks: 128 passes is fourteen hours of proof-checking for one year of
+history, and it compounds.
+
+128 was chosen optimising only for FPGA resistance, with the node side never
+costed. 6 keeps 76% of the pressure for a twelfth of the bill.
+
+### What was tried and did not work
+
+Moving the FP work into the memory latency, so it would overlap the three
+dependent scratchpad loads rather than follow them. It makes no difference:
+16 MiB fits in a modern L3, so those loads are cache hits and there is no
+stall to hide work in. Measured within 2-4% of the plain arrangement at every
+pass count, across three runs.
 
 ## Evaluating
 
@@ -99,15 +119,16 @@ FP-bound near 53 passes, so 128 clears it with margin at 4.3x rather than 16x.
 ./src/bench/bench_lumenite -filter 'HomeScrypt.*'
 ```
 
-Pick the largest setting that has not yet bent the CPU curve. The CPU knees
-before the GPU does, so it is the binding constraint, not the FPGA.
+Pick by the FMA/s column, not by wall time: that is the number an attacker has
+to match, and it stops improving long before the clock does.
 
 ## Known gaps
 
-- **Verification cost.** At `FP128` a header costs 4.3x v1.1 to check, and
-  validation cannot batch across nonces the way mining can. The four
-  independent chains allow ~4-wide SIMD within one hash, which should recover
-  much of it, but that is unmeasured. Time IBD before anything else.
+- **Verification cost is still the thing to watch.** At 6 passes a header costs
+  20 ms, against v1.1's 55 ms -- cheaper than v1.1, not dearer. But validation
+  cannot batch across nonces the way mining can, so a pool pays it per share.
+  The four independent chains allow ~4-wide SIMD within one hash, which is
+  unmeasured. Time IBD before anything else.
 - **No pinned test vector.** `v12_deterministic` prints its digest instead of
   asserting one. Reproduce on CUDA and OpenCL first, then pin it.
 - **The mix-round count is still a model number.** Only the FP pass count has
