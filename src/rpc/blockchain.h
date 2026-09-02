@@ -29,8 +29,8 @@ static constexpr int NUM_GETBLOCKSTATS_PERCENTILES = 5;
 /**
  * Get the difficulty of the net wrt to the given block index.
  *
- * @return A floating point number that is a multiple of the main net minimum
- * difficulty (4295032833 hashes).
+ * @return Lumenite difficulty relative to the active network's maximum PoW target.
+ * A target equal to powLimit is difficulty 1.0.
  */
 double GetDifficulty(const CBlockIndex* blockindex);
 

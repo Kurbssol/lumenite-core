@@ -19,7 +19,7 @@ uint256 CBlockHeader::GetHash() const
 uint256 CBlockHeader::GetPoWHash() const
 {
     uint256 thash;
-    homescrypt_v11(BEGIN(nVersion), BEGIN(thash));
+    homescrypt_v12(BEGIN(nVersion), BEGIN(thash));
     return thash;
 }
 
