@@ -256,7 +256,7 @@ constexpr int FP_INNER = 8;
 
 } // namespace
 
-void homescrypt_v12_tuned(const char* input, char* output,
+__attribute__((target("fma"))) void homescrypt_v12_tuned(const char* input, char* output,
                           std::size_t mix_rounds, std::size_t fp_passes)
 {
     std::array<unsigned char, 32> scrypt_seed{};
