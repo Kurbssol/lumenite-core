@@ -81,8 +81,8 @@ public:
         consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = false;
 
-        // Lumenite mainnet uses the legacy difficulty adjustment algorithm.
-        consensus.fPowUseLWMA = false;
+        // Lumenite mainnet uses LWMA-45 difficulty adjustment from genesis.
+        consensus.fPowUseLWMA = true;
         consensus.nPowLWMAWindow = 45;
         consensus.nPowLWMAActivationHeight = 0;
         consensus.nRuleChangeActivationThreshold = 6048; // 75% of 8064
