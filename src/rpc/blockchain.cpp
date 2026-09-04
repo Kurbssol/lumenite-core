@@ -6,6 +6,7 @@
 #include <rpc/blockchain.h>
 
 #include <amount.h>
+#include <arith_uint256.h>
 #include <blockfilter.h>
 #include <chain.h>
 #include <chainparams.h>
@@ -96,22 +97,20 @@ double GetDifficulty(const CBlockIndex* blockindex)
 {
     CHECK_NONFATAL(blockindex);
 
-    int nShift = (blockindex->nBits >> 24) & 0xff;
-    double dDiff =
-        (double)0x0000ffff / (double)(blockindex->nBits & 0x00ffffff);
+    bool negative{false};
+    bool overflow{false};
+    arith_uint256 target;
+    target.SetCompact(blockindex->nBits, &negative, &overflow);
 
-    while (nShift < 29)
-    {
-        dDiff *= 256.0;
-        nShift++;
-    }
-    while (nShift > 29)
-    {
-        dDiff /= 256.0;
-        nShift--;
+    if (negative || overflow || target == 0) {
+        return 0.0;
     }
 
-    return dDiff;
+    const arith_uint256 pow_limit = UintToArith256(Params().GetConsensus().powLimit);
+
+    // Lumenite difficulty is relative to the active network's maximum PoW target.
+    // powLimit == difficulty 1.0; half that target == difficulty 2.0, etc.
+    return pow_limit.getdouble() / target.getdouble();
 }
 
 static int ComputeNextBlockAndDepth(const CBlockIndex* tip, const CBlockIndex* blockindex, const CBlockIndex*& next)

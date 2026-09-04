@@ -81,8 +81,8 @@ public:
         consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = false;
 
-        // Lumenite mainnet uses the legacy difficulty adjustment algorithm.
-        consensus.fPowUseLWMA = false;
+        // Lumenite mainnet uses LWMA-45 difficulty adjustment from genesis.
+        consensus.fPowUseLWMA = true;
         consensus.nPowLWMAWindow = 45;
         consensus.nPowLWMAActivationHeight = 0;
         consensus.nRuleChangeActivationThreshold = 6048; // 75% of 8064
@@ -121,9 +121,9 @@ public:
         m_assumed_blockchain_size = 40;
         m_assumed_chain_state_size = 2;
 
-        genesis = CreateGenesisBlock(1786928400, 5692, 0x1f03ffff, 1, 50 * COIN);
+        genesis = CreateGenesisBlock(1788469200, 80816, 0x1f00aaaa, 1, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
-        assert(consensus.hashGenesisBlock == uint256S("0xa19eda146e900af7ebbbbedbfe8eebdc4025aab6a29fe011c184ca67b458b265"));
+        assert(consensus.hashGenesisBlock == uint256S("0x31415a9231d89284af85a4159a2cf29d113766246a938e955a924312d1c1a8c2"));
         assert(genesis.hashMerkleRoot == uint256S("0xc9405c101b7c92ca39f74c7564d46ebb399aa480e76c55b7b6fa0d63963ebc95"));
 
         // Note that of those which support the service bits prefix, most only support a subset of
@@ -181,7 +181,7 @@ public:
                 consensus.CSVHeight = 1;
                 consensus.SegwitHeight = 1;
                 consensus.MinBIP9WarningHeight = 1;
-        consensus.powLimit = uint256S("000fffff00000000000000000000000000000000000000000000000000000000");
+        consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.nPowTargetTimespan = 3.5 * 24 * 60 * 60; // Legacy interval retained for non-LWMA paths
         consensus.nPowTargetSpacing = 2.5 * 60;
 
@@ -215,18 +215,18 @@ public:
                 consensus.defaultAssumeValid = uint256{};
 
                 consensus.mweb_pegout_feature_activation_height = std::numeric_limits<int>::max();
-        pchMessageStart[0] = 0x7a;
-        pchMessageStart[1] = 0x13;
-        pchMessageStart[2] = 0xb5;
-        pchMessageStart[3] = 0xe9;
-        nDefaultPort = 29335;
+        pchMessageStart[0] = 0x91;
+        pchMessageStart[1] = 0x2c;
+        pchMessageStart[2] = 0x6e;
+        pchMessageStart[3] = 0xa4;
+        nDefaultPort = 49335;
         nPruneAfterHeight = 1000;
         m_assumed_blockchain_size = 4;
         m_assumed_chain_state_size = 1;
 
-        genesis = CreateGenesisBlock(1786928460, 1754, 0x1f0fffff, 1, 50 * COIN);
+        genesis = CreateGenesisBlock(1786928460, 0, 0x207fffff, 1, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
-        assert(consensus.hashGenesisBlock == uint256S("0x91603d0a4602fc91b4147a44f4b9cab2ce776508125febe3318c1305f3d983ec"));
+        assert(consensus.hashGenesisBlock == uint256S("0x2b4b2e2e0f292bc290839e6cac9e7a1e5df3c6c9ae5338cd8322d016d11435d3"));
         assert(genesis.hashMerkleRoot == uint256S("0xc9405c101b7c92ca39f74c7564d46ebb399aa480e76c55b7b6fa0d63963ebc95"));
 
         vFixedSeeds.clear();

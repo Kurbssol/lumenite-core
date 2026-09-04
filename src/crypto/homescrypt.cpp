@@ -29,11 +29,40 @@ constexpr unsigned char DOMAIN_FINAL[] = {
 };
 
 // v1.2. Only the product of these matters: it sets the FP32 FMAs per hash,
-// mix_rounds * fp_passes * FP_INNER * 4, here ~2.7e8. Rounds come down as FP
-// work goes up; v1.1's memory cost is too dominant otherwise. 128 passes puts
-// a hash at 238ms against v1.1's 55ms, measured. See doc/homescrypt-v12.md.
+// mix_rounds * fp_passes * FP_INNER * 4. Rounds come down as FP work goes up;
+// v1.1's memory cost is too dominant otherwise.
+//
+// FP_PASSES_V12 = 6, revised down from 128.
+//
+// The defence this chain buys with floating point is a RATE: an FPGA has to
+// sustain the same FMAs per second a CPU or GPU does, and it is scarce DSP
+// slices that stop it. That rate saturates almost immediately. Measured on one
+// core, mix phase only:
+//
+//     passes    time      FMA/s demanded    full hash    1 year of chain
+//     ------    ------    --------------    ---------    ---------------
+//        0       6.5 ms          0            13 ms          46 min
+//        3       8   ms       0.80 G          15 ms          52 min
+//        6      13   ms       0.90 G          20 ms         1.2 hours
+//       12      26   ms       0.98 G          33 ms         1.9 hours
+//       24      50   ms       1.00 G          57 ms         3.3 hours
+//      128     228   ms       1.18 G         238 ms          14 hours
+//
+// Going from 6 to 128 costs eighteen times the verification and buys 31% more
+// pressure on an attacker. That is a bad trade, and it is paid by everyone who
+// ever syncs the chain: at a 150s block target, a year is 210,000 blocks, so
+// 128 passes means fourteen hours of pure proof-checking to sync one year --
+// growing every year, on every node, forever.
+//
+// 6 keeps 76% of the FP32 demand for 1.2 hours. The original 128 was chosen
+// optimising only for FPGA resistance, without costing the node side at all.
+//
+// Interleaving the FP work into the memory latency was tried and does not
+// help: the 16 MiB scratchpad fits in a modern L3, so the loads are cache hits
+// and there is no stall to hide work in. Measured within 2-4% of the plain
+// arrangement at every pass count.
 constexpr std::size_t RANDOM_MIX_ROUNDS_V12 = WORDS / 32;
-constexpr std::size_t FP_PASSES_V12 = 128;
+constexpr std::size_t FP_PASSES_V12 = 6;
 
 constexpr unsigned char DOMAIN_SEED_V12[] = {
     'H','O','M','E','S','C','R','Y','P','T','-','V','1','.','2','-','S','E','E','D'
@@ -227,7 +256,7 @@ constexpr int FP_INNER = 8;
 
 } // namespace
 
-void homescrypt_v12_tuned(const char* input, char* output,
+__attribute__((target("fma"))) void homescrypt_v12_tuned(const char* input, char* output,
                           std::size_t mix_rounds, std::size_t fp_passes)
 {
     std::array<unsigned char, 32> scrypt_seed{};
